@@ -1,0 +1,95 @@
+.record-card {
+  background: white;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .record-card {
+    padding: 20px;
+  }
+}
+
+.record-card.editing {
+  background-color: #f9f9f9;
+}
+
+.record-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .record-card .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.record-card .card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: #f0f0f0;
+}
+
+.record-info {
+  margin-bottom: 20px;
+}
+
+.record-info p {
+  margin: 10px 0;
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.record-info strong {
+  color: #333;
+}
+
+.record-notes {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.record-notes p {
+  margin: 8px 0;
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.record-notes p:first-child {
+  color: #333;
+  font-weight: 500;
+}

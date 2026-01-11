@@ -1,0 +1,18 @@
+.bean-details {
+  margin-top: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bean-details p {
+  margin: 12px 0;
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.bean-details strong {
+  color: #333;
+}

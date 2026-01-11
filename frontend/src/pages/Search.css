@@ -1,0 +1,56 @@
+.search-description {
+  color: #666;
+  font-size: 14px;
+  margin-top: 8px;
+  font-weight: normal;
+}
+
+.search-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.results-count {
+  color: #666;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.empty-search {
+  text-align: center;
+  padding: 40px 20px;
+  color: #888;
+}
+
+.search-record-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.record-bean-info {
+  padding: 8px 12px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333;
+}
+
+.record-bean-info strong {
+  color: #8B4513;
+  font-weight: 600;
+}
+
+.bean-meta {
+  color: #666;
+  font-weight: normal;
+}
+
+@media (max-width: 768px) {
+  .search-filters {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
