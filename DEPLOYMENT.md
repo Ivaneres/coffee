@@ -160,7 +160,13 @@ server {
 
 3. **Enable SSL with Let's Encrypt:**
 ```bash
+# Debian/Ubuntu
 sudo apt install certbot python3-certbot-nginx
+
+# Fedora/RHEL/CentOS
+sudo dnf install certbot python3-certbot-nginx
+
+# Then run certbot
 sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com
 ```
 
@@ -228,7 +234,14 @@ sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com
 
 1. **Install PostgreSQL:**
 ```bash
+# Debian/Ubuntu
 sudo apt install postgresql postgresql-contrib
+
+# Fedora/RHEL/CentOS
+sudo dnf install postgresql postgresql-server
+sudo postgresql-setup --initdb
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
 ```
 
 2. **Create database:**

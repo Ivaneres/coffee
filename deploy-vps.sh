@@ -2,6 +2,7 @@
 
 # VPS Deployment Script - Full setup including systemd and Nginx
 # This script assumes you have sudo access and are deploying to a fresh VPS
+# Supports both Debian/Ubuntu (apt) and Fedora/RHEL/CentOS (dnf)
 
 set -e
 
@@ -23,10 +24,36 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Detect package manager
+detect_package_manager() {
+    if command -v dnf &> /dev/null; then
+        PKG_MANAGER="dnf"
+        PKG_INSTALL="sudo dnf install -y"
+        PKG_UPDATE="sudo dnf update -y"
+        CERTBOT_PKG="python3-certbot-nginx"
+        IS_FEDORA=true
+    elif command -v yum &> /dev/null; then
+        PKG_MANAGER="yum"
+        PKG_INSTALL="sudo yum install -y"
+        PKG_UPDATE="sudo yum update -y"
+        CERTBOT_PKG="python3-certbot-nginx"
+        IS_FEDORA=true
+    elif command -v apt &> /dev/null; then
+        PKG_MANAGER="apt"
+        PKG_INSTALL="sudo apt install -y"
+        PKG_UPDATE="sudo apt update"
+        CERTBOT_PKG="python3-certbot-nginx"
+        IS_FEDORA=false
+    else
+        print_error "Could not detect package manager. Please install dependencies manually."
+        exit 1
+    fi
+    print_info "Detected package manager: $PKG_MANAGER"
+}
+
 # Configuration - EDIT THESE
 DOMAIN="yourdomain.com"
 API_DOMAIN="api.yourdomain.com"
-APP_USER="www-data"
 APP_DIR="/var/www/espresso-tracker"
 BACKEND_DIR="$APP_DIR/backend"
 FRONTEND_DIR="$APP_DIR/frontend"
@@ -37,8 +64,8 @@ print_info "========================================="
 print_warn "Make sure to edit this script and set:"
 print_warn "  - DOMAIN"
 print_warn "  - API_DOMAIN"
-print_warn "  - APP_USER"
 print_warn "  - APP_DIR"
+print_info "APP_USER will be auto-detected based on OS"
 print_info "========================================="
 read -p "Continue? (y/n) " -n 1 -r
 echo
@@ -46,15 +73,30 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 1
 fi
 
-# Install system dependencies
+# Detect and install system dependencies
+detect_package_manager
+
+# Set appropriate user based on OS
+if [ "$IS_FEDORA" = true ]; then
+    APP_USER="nginx"  # Fedora/RHEL uses nginx user
+else
+    APP_USER="www-data"  # Debian/Ubuntu uses www-data
+fi
+
+print_info "Using user: $APP_USER"
 print_info "Installing system dependencies..."
-sudo apt update
-sudo apt install -y python3 python3-pip python3-venv nginx certbot python3-certbot-nginx
+$PKG_UPDATE
+$PKG_INSTALL python3 python3-pip python3-venv nginx certbot $CERTBOT_PKG
+
+# Enable and start Nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx
 
 # Create application directory
 print_info "Creating application directory..."
 sudo mkdir -p "$APP_DIR"
 sudo chown -R $USER:$APP_USER "$APP_DIR"
+sudo chmod -R 755 "$APP_DIR"
 
 # Copy application files (assuming we're running from project root)
 print_info "Copying application files..."
@@ -118,8 +160,10 @@ fi
 # Setup Nginx
 print_info "Configuring Nginx..."
 
-# Backend API
-sudo tee /etc/nginx/sites-available/espresso-api > /dev/null << EOF
+if [ "$PKG_MANAGER" = "dnf" ] || [ "$PKG_MANAGER" = "yum" ]; then
+    # Fedora/RHEL/CentOS - use conf.d directory
+    # Backend API
+    sudo tee /etc/nginx/conf.d/espresso-api.conf > /dev/null << EOF
 server {
     listen 80;
     server_name $API_DOMAIN;
@@ -134,8 +178,8 @@ server {
 }
 EOF
 
-# Frontend
-sudo tee /etc/nginx/sites-available/espresso-frontend > /dev/null << EOF
+    # Frontend
+    sudo tee /etc/nginx/conf.d/espresso-frontend.conf > /dev/null << EOF
 server {
     listen 80;
     server_name $DOMAIN;
@@ -154,10 +198,51 @@ server {
 }
 EOF
 
-# Enable sites
-sudo ln -sf /etc/nginx/sites-available/espresso-api /etc/nginx/sites-enabled/
-sudo ln -sf /etc/nginx/sites-available/espresso-frontend /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
+    # Remove default server block if it exists
+    sudo rm -f /etc/nginx/conf.d/default.conf
+else
+    # Debian/Ubuntu - use sites-available/sites-enabled
+    # Backend API
+    sudo tee /etc/nginx/sites-available/espresso-api > /dev/null << EOF
+server {
+    listen 80;
+    server_name $API_DOMAIN;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+EOF
+
+    # Frontend
+    sudo tee /etc/nginx/sites-available/espresso-frontend > /dev/null << EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+
+    root $FRONTEND_DIR/build;
+    index index.html;
+
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    location /static {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+EOF
+
+    # Enable sites
+    sudo ln -sf /etc/nginx/sites-available/espresso-api /etc/nginx/sites-enabled/
+    sudo ln -sf /etc/nginx/sites-available/espresso-frontend /etc/nginx/sites-enabled/
+    sudo rm -f /etc/nginx/sites-enabled/default
+fi
 
 # Test and reload Nginx
 sudo nginx -t
