@@ -29,17 +29,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      authApi.getCurrentUser()
-        .then(setUser)
-        .catch(() => {
+    const restoreSession = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const userData = await authApi.getCurrentUser();
+          setUser(userData);
+        } catch (error) {
+          // Token is invalid or expired, clear it
           localStorage.removeItem('token');
-        })
-        .finally(() => setLoading(false));
-    } else {
+          setUser(null);
+        }
+      }
       setLoading(false);
-    }
+    };
+    
+    restoreSession();
+
+    // Listen for logout events from API interceptor
+    const handleLogout = () => {
+      setUser(null);
+    };
+    
+    window.addEventListener('auth:logout', handleLogout);
+    
+    return () => {
+      window.removeEventListener('auth:logout', handleLogout);
+    };
   }, []);
 
   const login = async (username: string, password: string) => {

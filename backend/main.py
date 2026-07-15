@@ -13,8 +13,19 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Espresso Tracker API")
 
-# CORS middleware
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+# CORS: browsers treat localhost vs 127.0.0.1 as different origins; strip env values;
+# empty ALLOWED_ORIGINS in .env would otherwise become [""] and block all cross-origin requests.
+_DEFAULT_DEV_ORIGINS = (
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+)
+_raw_origins = os.getenv("ALLOWED_ORIGINS")
+if _raw_origins is None:
+    _raw_origins = ",".join(_DEFAULT_DEV_ORIGINS)
+allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+if not allowed_origins:
+    allowed_origins = list(_DEFAULT_DEV_ORIGINS)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,

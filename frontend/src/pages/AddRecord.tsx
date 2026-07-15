@@ -80,8 +80,8 @@ const AddRecord: React.FC = () => {
         // Create mode - use defaults
         setFormData(prev => ({
           ...prev,
-          machine: settingsData.default_machine || '',
-          grinder: settingsData.default_grinder || '',
+          machine: settingsData?.default_machine || '',
+          grinder: settingsData?.default_grinder || '',
           rating: 5,
           sourness: 5,
           bitterness: 5,

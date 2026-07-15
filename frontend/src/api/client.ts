@@ -23,13 +23,19 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Handle 401 errors
+// Handle 401 errors (token expired or invalid)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Only redirect if we're not already on the login/register page
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+        localStorage.removeItem('token');
+        // Dispatch a custom event to notify AuthContext
+        window.dispatchEvent(new CustomEvent('auth:logout'));
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

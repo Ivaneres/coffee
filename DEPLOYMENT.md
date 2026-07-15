@@ -300,7 +300,7 @@ ALLOWED_ORIGINS=https://yourdomain.com
 ### Frontend Updates
 
 1. **Update API URL in production:**
-   - Set `REACT_APP_API_URL` environment variable during build
+   - **IMPORTANT**: Set `REACT_APP_API_URL` environment variable BEFORE building (React env vars are embedded at build time, not runtime)
    - Or update `frontend/src/api/client.ts`:
    ```typescript
    const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.yourdomain.com';
