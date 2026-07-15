@@ -102,7 +102,12 @@ fi
 print_info "Using user: $APP_USER"
 print_info "Installing system dependencies..."
 $PKG_UPDATE
-$PKG_INSTALL python3 python3-pip python3-venv nginx certbot $CERTBOT_PKG
+# python3-venv is Debian/Ubuntu only; Fedora/RHEL ship venv with python3
+if [ "$IS_FEDORA" = true ]; then
+    $PKG_INSTALL python3 python3-pip nginx certbot $CERTBOT_PKG
+else
+    $PKG_INSTALL python3 python3-pip python3-venv nginx certbot $CERTBOT_PKG
+fi
 
 # Enable and start Nginx
 sudo systemctl enable nginx
