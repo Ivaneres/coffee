@@ -32,7 +32,13 @@ For a complete VPS setup including systemd and Nginx configuration:
 ./deploy-vps.sh coffee.example.com api.coffee.example.com
 # Optional third arg sets install path (default: /var/www/espresso-tracker)
 ./deploy-vps.sh coffee.example.com api.coffee.example.com /var/www/espresso-tracker
+
+# Or pass an explicit database URL:
+DATABASE_URL='postgresql://espresso_user:secret@localhost/espresso_tracker' \
+  ./deploy-vps.sh coffee.example.com api.coffee.example.com
 ```
+
+The script resolves PostgreSQL from `DATABASE_URL`, an existing `backend/.env`, `POSTGRES_*`/`PG*` env vars, or by creating `espresso_user` / `espresso_tracker` via `sudo -u postgres` when the server is local.
 
 This script will:
 - Install system dependencies
