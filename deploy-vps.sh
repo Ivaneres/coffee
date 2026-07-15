@@ -134,7 +134,7 @@ User=$APP_USER
 Group=$APP_USER
 WorkingDirectory=$BACKEND_DIR
 Environment="PATH=$BACKEND_DIR/venv/bin"
-ExecStart=$BACKEND_DIR/venv/bin/gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 127.0.0.1:8000
+ExecStart=$BACKEND_DIR/venv/bin/gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 127.0.0.1:8002
 Restart=always
 
 [Install]
@@ -148,14 +148,14 @@ sudo systemctl start espresso-api
 # Setup frontend
 print_info "Setting up frontend..."
 cd "$FRONTEND_DIR"
+
+# Setup frontend .env BEFORE building (React env vars are embedded at build time)
+print_info "Setting up frontend environment..."
+echo "REACT_APP_API_URL=https://$API_DOMAIN" > .env
+print_info "Frontend API URL set to: https://$API_DOMAIN"
+
 npm install
 npm run build
-
-# Setup frontend .env
-if [ ! -f .env ]; then
-    print_warn "Creating frontend .env file..."
-    echo "REACT_APP_API_URL=https://$API_DOMAIN" > .env
-fi
 
 # Setup Nginx
 print_info "Configuring Nginx..."
@@ -169,7 +169,7 @@ server {
     server_name $API_DOMAIN;
 
     location / {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8002;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -209,7 +209,7 @@ server {
     server_name $API_DOMAIN;
 
     location / {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8002;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
