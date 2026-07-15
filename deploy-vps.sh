@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # VPS Deployment Script - Full setup including systemd and Nginx
+# Usage: ./deploy-vps.sh <domain> <api-domain> [app-dir]
 # This script assumes you have sudo access and are deploying to a fresh VPS
 # Supports both Debian/Ubuntu (apt) and Fedora/RHEL/CentOS (dnf)
 
@@ -51,20 +52,35 @@ detect_package_manager() {
     print_info "Detected package manager: $PKG_MANAGER"
 }
 
-# Configuration - EDIT THESE
-DOMAIN="yourdomain.com"
-API_DOMAIN="api.yourdomain.com"
-APP_DIR="/var/www/espresso-tracker"
+usage() {
+    echo "Usage: $0 <domain> <api-domain> [app-dir]"
+    echo
+    echo "Arguments:"
+    echo "  domain       Frontend domain (e.g. coffee.example.com)"
+    echo "  api-domain   API domain (e.g. api.coffee.example.com)"
+    echo "  app-dir      Install path (default: /var/www/espresso-tracker)"
+    echo
+    echo "Example:"
+    echo "  $0 coffee.example.com api.coffee.example.com"
+    exit 1
+}
+
+if [ $# -lt 2 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    usage
+fi
+
+DOMAIN="$1"
+API_DOMAIN="$2"
+APP_DIR="${3:-/var/www/espresso-tracker}"
 BACKEND_DIR="$APP_DIR/backend"
 FRONTEND_DIR="$APP_DIR/frontend"
 
 print_info "========================================="
 print_info "VPS Full Deployment Setup"
 print_info "========================================="
-print_warn "Make sure to edit this script and set:"
-print_warn "  - DOMAIN"
-print_warn "  - API_DOMAIN"
-print_warn "  - APP_DIR"
+print_info "Domain:     $DOMAIN"
+print_info "API domain: $API_DOMAIN"
+print_info "App dir:    $APP_DIR"
 print_info "APP_USER will be auto-detected based on OS"
 print_info "========================================="
 read -p "Continue? (y/n) " -n 1 -r

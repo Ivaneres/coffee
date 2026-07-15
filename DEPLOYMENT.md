@@ -29,8 +29,9 @@ We provide automated deployment scripts to make deployment easier:
 For a complete VPS setup including systemd and Nginx configuration:
 
 ```bash
-# Edit deploy-vps.sh first to set your domain and paths
-./deploy-vps.sh
+./deploy-vps.sh coffee.example.com api.coffee.example.com
+# Optional third arg sets install path (default: /var/www/espresso-tracker)
+./deploy-vps.sh coffee.example.com api.coffee.example.com /var/www/espresso-tracker
 ```
 
 This script will:
@@ -40,8 +41,6 @@ This script will:
 - Configure Nginx
 - Set up SSL certificates
 - Build and deploy frontend
-
-**Note:** Edit the script first to configure your domain names and paths.
 
 ## Overview
 
