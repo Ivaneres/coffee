@@ -1,12 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { beansApi, Bean } from '../api/beans';
+import { IconChevronRight, IconClose, IconCup, IconPlus } from '../components/Icons';
 import './BeansList.css';
 
+const LAST_BEAN_KEY = 'espresso-tracker:lastBeanId';
+
 const BeansList: React.FC = () => {
+  const navigate = useNavigate();
   const [beans, setBeans] = useState<Bean[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [beanQuery, setBeanQuery] = useState('');
+  const [pickerQuery, setPickerQuery] = useState('');
   const [formData, setFormData] = useState({
     variety: '',
     seller: '',
@@ -18,10 +25,46 @@ const BeansList: React.FC = () => {
     loadBeans();
   }, []);
 
+  useEffect(() => {
+    if (!showPicker) return;
+    setPickerQuery('');
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowPicker(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showPicker]);
+
+  const lastBeanId = useMemo(() => {
+    const raw = localStorage.getItem(LAST_BEAN_KEY);
+    return raw ? parseInt(raw, 10) : null;
+  }, [showPicker, beans]);
+
+  const matchesQuery = (bean: Bean, query: string) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return [bean.variety, bean.roaster, bean.seller, bean.roast_level]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(q));
+  };
+
+  const filteredBeans = useMemo(
+    () => beans.filter((b) => matchesQuery(b, beanQuery)),
+    [beans, beanQuery]
+  );
+
+  const sortedForPicker = useMemo(() => {
+    const filtered = beans.filter((b) => matchesQuery(b, pickerQuery));
+    if (!lastBeanId) return filtered;
+    const last = filtered.find((b) => b.id === lastBeanId);
+    if (!last) return filtered;
+    return [last, ...filtered.filter((b) => b.id !== lastBeanId)];
+  }, [beans, lastBeanId, pickerQuery]);
+
   const loadBeans = async () => {
     try {
       const data = await beansApi.getAll();
-      setBeans(data);
+      setBeans(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load beans:', error);
     } finally {
@@ -42,51 +85,96 @@ const BeansList: React.FC = () => {
     }
   };
 
+  const openLogFlow = () => {
+    if (beans.length === 0) {
+      setShowForm(true);
+      return;
+    }
+    if (beans.length === 1) {
+      navigate(`/beans/${beans[0].id}/add-record`);
+      return;
+    }
+    setShowPicker(true);
+  };
+
+  const pickBean = (beanId: number) => {
+    localStorage.setItem(LAST_BEAN_KEY, String(beanId));
+    setShowPicker(false);
+    navigate(`/beans/${beanId}/add-record`);
+  };
+
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="loading-state">Loading…</div>;
   }
 
   return (
-    <div>
-      <div className="page-header">
-        <h1>My Beans</h1>
-        <button onClick={() => setShowForm(!showForm)} className="btn btn-primary">
-          {showForm ? 'Cancel' : '+ Add Bean'}
+    <div className="beans-page">
+      <header className="hub-hero">
+        <p className="hub-eyebrow">Espresso Tracker</p>
+        <h1 className="hub-title">Ready to dial in?</h1>
+        <p className="hub-subtitle">Log a shot in a few taps — numbers first, taste later.</p>
+        <button type="button" className="btn btn-primary hub-log-cta" onClick={openLogFlow}>
+          Log a shot
+        </button>
+      </header>
+
+      <div className="hub-section-header">
+        <h2 className="hub-section-title">Your beans</h2>
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="btn btn-secondary btn-compact"
+        >
+          {showForm ? (
+            <>
+              <IconClose size={16} /> Cancel
+            </>
+          ) : (
+            <>
+              <IconPlus size={16} /> Add bean
+            </>
+          )}
         </button>
       </div>
 
       {showForm && (
-        <div className="card">
-          <h2>Add New Bean</h2>
+        <div className="card bean-form-panel">
+          <h2 className="form-section-title">Add New Bean</h2>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Variety *</label>
+              <label htmlFor="bean-variety">Variety *</label>
               <input
+                id="bean-variety"
                 type="text"
                 value={formData.variety}
                 onChange={(e) => setFormData({ ...formData, variety: e.target.value })}
                 required
+                placeholder="e.g. Ethiopia Yirgacheffe"
+                autoFocus
               />
             </div>
             <div className="form-group">
-              <label>Seller</label>
+              <label htmlFor="bean-seller">Seller</label>
               <input
+                id="bean-seller"
                 type="text"
                 value={formData.seller}
                 onChange={(e) => setFormData({ ...formData, seller: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label>Roaster</label>
+              <label htmlFor="bean-roaster">Roaster</label>
               <input
+                id="bean-roaster"
                 type="text"
                 value={formData.roaster}
                 onChange={(e) => setFormData({ ...formData, roaster: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label>Roast Level</label>
+              <label htmlFor="bean-roast">Roast Level</label>
               <select
+                id="bean-roast"
                 value={formData.roast_level}
                 onChange={(e) => setFormData({ ...formData, roast_level: e.target.value })}
               >
@@ -98,7 +186,7 @@ const BeansList: React.FC = () => {
                 <option value="Dark">Dark</option>
               </select>
             </div>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary btn-block">
               Create Bean
             </button>
           </form>
@@ -107,41 +195,119 @@ const BeansList: React.FC = () => {
 
       {beans.length === 0 ? (
         <div className="card empty-state">
-          <div className="empty-state-icon">☕</div>
+          <div className="empty-state-icon">
+            <IconCup size={36} />
+          </div>
           <h3>No beans yet</h3>
-          <p>Add your first bean to start tracking your espresso journey!</p>
+          <p>Add your first bean to start tracking shots.</p>
         </div>
       ) : (
-        <div className="beans-grid">
-          {beans.map((bean) => (
-            <Link key={bean.id} to={`/beans/${bean.id}`} className="bean-card">
-              <div className="bean-card-header">
-                <h3>{bean.variety}</h3>
-              </div>
-              <div className="bean-info-list">
-                {bean.roaster && (
-                  <div className="bean-info">
-                    <span className="bean-info-label">Roaster:</span>
-                    <span className="bean-info-value">{bean.roaster}</span>
-                  </div>
-                )}
-                {bean.seller && (
-                  <div className="bean-info">
-                    <span className="bean-info-label">Seller:</span>
-                    <span className="bean-info-value">{bean.seller}</span>
-                  </div>
-                )}
-                {bean.roast_level && (
-                  <div className="bean-info">
-                    <span className="bean-info-label">Roast:</span>
-                    <span className={`roast-badge ${bean.roast_level.toLowerCase().replace(/\s+/g, '-')}`}>
-                      {bean.roast_level}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Link>
-          ))}
+        <>
+          {beans.length > 4 && (
+            <div className="bean-search">
+              <label htmlFor="bean-search" className="sr-only">
+                Search beans
+              </label>
+              <input
+                id="bean-search"
+                type="search"
+                value={beanQuery}
+                onChange={(e) => setBeanQuery(e.target.value)}
+                placeholder="Search variety, roaster…"
+                autoComplete="off"
+              />
+            </div>
+          )}
+          {filteredBeans.length === 0 ? (
+            <div className="card empty-state compact">
+              <h3>No matches</h3>
+              <p>Try a different search.</p>
+            </div>
+          ) : (
+            <ul className="beans-list">
+              {filteredBeans.map((bean) => (
+                <li key={bean.id}>
+                  <Link to={`/beans/${bean.id}`} className="bean-row">
+                    <div className="bean-row-body">
+                      <h3>{bean.variety}</h3>
+                      <div className="bean-row-meta">
+                        {bean.roaster && <span>{bean.roaster}</span>}
+                        {bean.roaster && bean.roast_level && <span className="meta-dot">·</span>}
+                        {bean.roast_level && (
+                          <span
+                            className={`roast-badge ${bean.roast_level.toLowerCase().replace(/\s+/g, '-')}`}
+                          >
+                            {bean.roast_level}
+                          </span>
+                        )}
+                        {!bean.roaster && bean.seller && <span>{bean.seller}</span>}
+                      </div>
+                    </div>
+                    <IconChevronRight size={20} className="bean-row-chevron" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+
+      {showPicker && (
+        <div className="sheet-overlay" role="presentation" onClick={() => setShowPicker(false)}>
+          <div
+            className="bean-picker-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bean-picker-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sheet-handle" aria-hidden />
+            <div className="sheet-header">
+              <h2 id="bean-picker-title">Which bean?</h2>
+              <button
+                type="button"
+                className="btn-ghost sheet-close"
+                aria-label="Close"
+                onClick={() => setShowPicker(false)}
+              >
+                <IconClose size={20} />
+              </button>
+            </div>
+            <div className="picker-search">
+              <label htmlFor="picker-search" className="sr-only">
+                Search beans
+              </label>
+              <input
+                id="picker-search"
+                type="search"
+                value={pickerQuery}
+                onChange={(e) => setPickerQuery(e.target.value)}
+                placeholder="Search beans…"
+                autoComplete="off"
+                autoFocus
+              />
+            </div>
+            <ul className="picker-list">
+              {sortedForPicker.length === 0 ? (
+                <li className="picker-empty">No matching beans</li>
+              ) : (
+                sortedForPicker.map((bean) => (
+                  <li key={bean.id}>
+                    <button type="button" className="picker-row" onClick={() => pickBean(bean.id)}>
+                      <div className="picker-row-body">
+                        <span className="picker-row-title">{bean.variety}</span>
+                        {bean.roaster && <span className="picker-row-meta">{bean.roaster}</span>}
+                        {bean.id === lastBeanId && (
+                          <span className="picker-continue">Continue with this</span>
+                        )}
+                      </div>
+                      <IconChevronRight size={18} />
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
         </div>
       )}
     </div>

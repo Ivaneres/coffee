@@ -38,7 +38,7 @@ describe('Login', () => {
   it('should render login form', () => {
     render(<Login />);
 
-    expect(screen.getByRole('heading', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
     expect(screen.getByText('Username')).toBeInTheDocument();
     expect(screen.getByText('Password')).toBeInTheDocument();
     // Check for inputs by label

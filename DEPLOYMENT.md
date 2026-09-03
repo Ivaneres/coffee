@@ -4,49 +4,41 @@ This guide covers deploying the Espresso Tracker app to production.
 
 ## Quick Start with Deployment Scripts
 
-We provide automated deployment scripts to make deployment easier:
+### Generic VPS deploy (recommended)
 
-### General Deployment Script
+Config-driven install for Python (FastAPI/Flask) + React on one subdomain. Nginx serves the SPA and proxies `API_PREFIX` (default `/api`) to gunicorn.
+
+1. Edit `deploy.conf` — at minimum set `DOMAIN`.
+2. Run from the project root on the VPS (with sudo):
 
 ```bash
-# Deploy everything to VPS
+# First-time install
+DOMAIN=coffee.example.com ./deploy-generic.sh /path/to/espresso-tracker
+
+# Or set DOMAIN in deploy.conf, then:
+./deploy-generic.sh /path/to/espresso-tracker
+
+# Redeploy code only (no packages / DB / certbot)
+./deploy-generic.sh /path/to/espresso-tracker --redeploy --yes
+
+# Explicit DB URL
+DATABASE_URL='postgresql://espresso_user:secret@localhost/espresso_tracker' \
+  DOMAIN=coffee.example.com ./deploy-generic.sh /path/to/espresso-tracker --yes
+```
+
+The script rejects paths that are missing or have no `deploy.conf`. Keep `deploy-generic.sh` anywhere convenient; each app only needs its own `deploy.conf`. Key settings: `APP_NAME`, `BACKEND_DIR`, `FRONTEND_DIR`, `ENTRYPOINT`, `BACKEND_TYPE` (`asgi`|`wsgi`), `PORT`, `API_PREFIX`.
+
+### Legacy / other targets
+
+```bash
+# Older dual-domain VPS script (frontend + api.* separately)
+./deploy-vps.sh coffee.example.com api.coffee.example.com
+
+# Component deploy helpers (Railway, Netlify, etc.)
 ./deploy.sh all vps
-
-# Deploy only backend to Railway
 ./deploy.sh backend railway
-
-# Deploy only frontend to Netlify
 ./deploy.sh frontend netlify
 ```
-
-**Usage:**
-```bash
-./deploy.sh [backend|frontend|all] [vps|railway|render|netlify|vercel]
-```
-
-### Full VPS Setup Script
-
-For a complete VPS setup including systemd and Nginx configuration:
-
-```bash
-./deploy-vps.sh coffee.example.com api.coffee.example.com
-# Optional third arg sets install path (default: /var/www/espresso-tracker)
-./deploy-vps.sh coffee.example.com api.coffee.example.com /var/www/espresso-tracker
-
-# Or pass an explicit database URL:
-DATABASE_URL='postgresql://espresso_user:secret@localhost/espresso_tracker' \
-  ./deploy-vps.sh coffee.example.com api.coffee.example.com
-```
-
-The script resolves PostgreSQL from `DATABASE_URL`, an existing `backend/.env`, `POSTGRES_*`/`PG*` env vars, or by creating `espresso_user` / `espresso_tracker` via `sudo -u postgres` when the server is local.
-
-This script will:
-- Install system dependencies
-- Set up Python virtual environment
-- Create systemd service
-- Configure Nginx
-- Set up SSL certificates
-- Build and deploy frontend
 
 ## Overview
 

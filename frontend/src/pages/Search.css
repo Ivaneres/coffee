@@ -1,56 +1,65 @@
-.search-description {
-  color: #666;
-  font-size: 14px;
-  margin-top: 8px;
-  font-weight: normal;
-}
-
 .search-filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 640px) {
+  .search-filters {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+
+  .search-filters .form-group {
+    margin-bottom: var(--space-4);
+  }
+}
+
+.search-filters-card .form-section-title {
+  margin-bottom: var(--space-4);
+}
+
+.search-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-4);
+  gap: var(--space-3);
+}
+
+.search-results-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
 }
 
 .results-count {
-  color: #666;
-  font-size: 14px;
-  font-weight: normal;
-}
-
-.empty-search {
-  text-align: center;
-  padding: 40px 20px;
-  color: #888;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .search-record-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-.record-bean-info {
-  padding: 8px 12px;
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #333;
+.record-bean-chip {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--accent-soft);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  font-weight: 500;
 }
 
-.record-bean-info strong {
-  color: #8B4513;
-  font-weight: 600;
-}
-
-.bean-meta {
-  color: #666;
-  font-weight: normal;
-}
-
-@media (max-width: 768px) {
-  .search-filters {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
+.record-bean-chip strong {
+  color: var(--ink);
+  font-weight: 700;
 }

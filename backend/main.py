@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
+from sqlalchemy import inspect, text
 from database import engine, Base
 from routers import auth, beans, records, users
 import os
@@ -10,6 +11,20 @@ load_dotenv()
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+
+def ensure_schema():
+    """Add columns introduced after initial create_all (SQLite-friendly)."""
+    inspector = inspect(engine)
+    if "user_settings" not in inspector.get_table_names():
+        return
+    columns = {col["name"] for col in inspector.get_columns("user_settings")}
+    with engine.begin() as conn:
+        if "default_dose" not in columns:
+            conn.execute(text("ALTER TABLE user_settings ADD COLUMN default_dose FLOAT"))
+
+
+ensure_schema()
 
 app = FastAPI(title="Espresso Tracker API")
 

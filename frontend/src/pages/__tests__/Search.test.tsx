@@ -3,13 +3,11 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from '../../test-utils';
 import Search from '../Search';
-import * as beansApi from '../../api/beans';
-import * as recordsApi from '../../api/records';
+import { beansApi } from '../../api/beans';
+import { recordsApi } from '../../api/records';
 
 jest.mock('../../api/beans');
 jest.mock('../../api/records');
-const mockedBeansApi = beansApi as jest.Mocked<typeof beansApi>;
-const mockedRecordsApi = recordsApi as jest.Mocked<typeof recordsApi>;
 
 const mockUseAuth = jest.fn();
 
@@ -21,9 +19,6 @@ jest.mock('../../contexts/AuthContext', () => ({
 describe('Search', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Ensure mocks are set up
-    (mockedBeansApi.getAll as jest.Mock) = jest.fn();
-    (mockedRecordsApi.getAll as jest.Mock) = jest.fn();
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       user: { id: 1, username: 'testuser', email: 'test@example.com', created_at: '2024-01-01' },
@@ -35,8 +30,8 @@ describe('Search', () => {
   });
 
   it('should display search form', () => {
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue([]);
-    (mockedRecordsApi.getAll as jest.Mock).mockResolvedValue([]);
+    jest.mocked(beansApi.getAll).mockResolvedValue([]);
+    jest.mocked(recordsApi.getAll).mockResolvedValue([]);
 
     render(<Search />);
 
@@ -45,13 +40,11 @@ describe('Search', () => {
     expect(screen.getByText('Roaster')).toBeInTheDocument();
     expect(screen.getByText('Machine')).toBeInTheDocument();
     expect(screen.getByText('Grinder')).toBeInTheDocument();
-    // Check for inputs by placeholder
     expect(screen.getByPlaceholderText(/blue mountain/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/la marzocco/i)).toBeInTheDocument();
   });
 
   it('should perform search when filters are entered', async () => {
-    
     const mockRecords = [
       {
         id: 1,
@@ -63,13 +56,13 @@ describe('Search', () => {
       },
     ];
 
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue([]);
-    (mockedRecordsApi.getAll as jest.Mock).mockResolvedValue(mockRecords);
+    jest.mocked(beansApi.getAll).mockResolvedValue([]);
+    jest.mocked(recordsApi.getAll).mockResolvedValue(mockRecords);
 
     render(<Search />);
 
     await waitFor(() => {
-      expect(screen.getByText(/enter search criteria/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /start searching/i })).toBeInTheDocument();
     });
 
     const machineInput = screen.getByPlaceholderText(/la marzocco/i);
@@ -77,7 +70,7 @@ describe('Search', () => {
     await userEvent.type(machineInput, 'La Marzocco');
 
     await waitFor(() => {
-      expect(mockedRecordsApi.getAll as jest.Mock).toHaveBeenCalledWith(
+      expect(recordsApi.getAll).toHaveBeenCalledWith(
         expect.objectContaining({
           machine: 'La Marzocco',
         })
@@ -86,7 +79,6 @@ describe('Search', () => {
   });
 
   it('should display search results', async () => {
-    
     const mockBeans = [
       {
         id: 1,
@@ -108,8 +100,8 @@ describe('Search', () => {
       },
     ];
 
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue(mockBeans);
-    (mockedRecordsApi.getAll as jest.Mock).mockResolvedValue(mockRecords);
+    jest.mocked(beansApi.getAll).mockResolvedValue(mockBeans);
+    jest.mocked(recordsApi.getAll).mockResolvedValue(mockRecords);
 
     render(<Search />);
 
@@ -125,17 +117,17 @@ describe('Search', () => {
   });
 
   it('should show empty state when no search criteria', () => {
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue([]);
-    (mockedRecordsApi.getAll as jest.Mock).mockResolvedValue([]);
+    jest.mocked(beansApi.getAll).mockResolvedValue([]);
+    jest.mocked(recordsApi.getAll).mockResolvedValue([]);
 
     render(<Search />);
 
-    expect(screen.getByText(/enter search criteria/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /start searching/i })).toBeInTheDocument();
   });
 
   it('should show no results message when search returns empty', async () => {
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue([]);
-    (mockedRecordsApi.getAll as jest.Mock).mockResolvedValue([]);
+    jest.mocked(beansApi.getAll).mockResolvedValue([]);
+    jest.mocked(recordsApi.getAll).mockResolvedValue([]);
 
     render(<Search />);
 
@@ -148,8 +140,8 @@ describe('Search', () => {
   });
 
   it('should search by multiple criteria', async () => {
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue([]);
-    (mockedRecordsApi.getAll as jest.Mock).mockResolvedValue([]);
+    jest.mocked(beansApi.getAll).mockResolvedValue([]);
+    jest.mocked(recordsApi.getAll).mockResolvedValue([]);
 
     render(<Search />);
 
@@ -161,17 +153,18 @@ describe('Search', () => {
     await userEvent.type(grinderInput, 'Eureka');
 
     await waitFor(() => {
-      expect(mockedRecordsApi.getAll as jest.Mock).toHaveBeenCalled();
+      expect(recordsApi.getAll).toHaveBeenCalled();
     }, { timeout: 2000 });
-    
-    // Check the call was made with correct params
-    const calls = (mockedRecordsApi.getAll as jest.Mock).mock.calls;
+
+    const calls = jest.mocked(recordsApi.getAll).mock.calls;
     expect(calls.length).toBeGreaterThan(0);
     const lastCall = calls[calls.length - 1];
-    expect(lastCall[0]).toMatchObject(expect.objectContaining({
-      bean_variety: 'Ethiopian',
-      machine: 'La Marzocco',
-      grinder: 'Eureka',
-    }));
+    expect(lastCall[0]).toMatchObject(
+      expect.objectContaining({
+        bean_variety: 'Ethiopian',
+        machine: 'La Marzocco',
+        grinder: 'Eureka',
+      })
+    );
   });
 });

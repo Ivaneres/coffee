@@ -4,6 +4,7 @@ import { beansApi, Bean } from '../api/beans';
 import { recordsApi, EspressoRecord } from '../api/records';
 import RecordCard from '../components/RecordCard';
 import SearchBar from '../components/SearchBar';
+import { IconBack, IconPlus, IconTrash } from '../components/Icons';
 import './BeanDetail.css';
 
 const BeanDetail: React.FC = () => {
@@ -13,6 +14,7 @@ const BeanDetail: React.FC = () => {
   const [records, setRecords] = useState<EspressoRecord[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<EspressoRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [searchParams, setSearchParams] = useState({
     machine: '',
     grinder: '',
@@ -36,7 +38,7 @@ const BeanDetail: React.FC = () => {
         recordsApi.getAll({ bean_id: parseInt(id) }),
       ]);
       setBean(beanData);
-      setRecords(recordsData);
+      setRecords(Array.isArray(recordsData) ? recordsData : []);
     } catch (error) {
       console.error('Failed to load data:', error);
       navigate('/beans');
@@ -78,64 +80,119 @@ const BeanDetail: React.FC = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="loading-state">Loading…</div>;
   }
 
   if (!bean) {
-    return <div>Bean not found</div>;
+    return <div className="loading-state">Bean not found</div>;
   }
 
+  const filtersActive = Boolean(searchParams.machine || searchParams.grinder);
+
   return (
-    <div>
-      <div className="page-header">
-        <button onClick={() => navigate('/beans')} className="btn btn-secondary">
-          ← Back to Beans
+    <div className="bean-detail-page">
+      <div className="bean-detail-toolbar">
+        <button type="button" onClick={() => navigate('/beans')} className="back-link">
+          <IconBack size={20} />
+          Home
         </button>
-        <button onClick={handleDeleteBean} className="btn btn-danger">
-          Delete Bean
+        <button type="button" onClick={handleDeleteBean} className="btn-icon-text danger" aria-label="Delete bean">
+          <IconTrash size={18} />
+          <span className="btn-icon-text-label">Delete</span>
         </button>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <h1>{bean.variety}</h1>
+      <header className="bean-summary">
+        <h1 className="page-title">{bean.variety}</h1>
+        <div className="bean-summary-meta">
+          {bean.roaster && (
+            <div className="bean-summary-item">
+              <span className="label">Roaster</span>
+              <span>{bean.roaster}</span>
+            </div>
+          )}
+          {bean.seller && (
+            <div className="bean-summary-item">
+              <span className="label">Seller</span>
+              <span>{bean.seller}</span>
+            </div>
+          )}
+          {bean.roast_level && (
+            <div className="bean-summary-item">
+              <span className="label">Roast</span>
+              <span
+                className={`roast-badge ${bean.roast_level.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {bean.roast_level}
+              </span>
+            </div>
+          )}
         </div>
-        <div className="bean-details">
-          {bean.roaster && <p><strong>Roaster:</strong> {bean.roaster}</p>}
-          {bean.seller && <p><strong>Seller:</strong> {bean.seller}</p>}
-          {bean.roast_level && <p><strong>Roast Level:</strong> {bean.roast_level}</p>}
-        </div>
-      </div>
+      </header>
 
-      <div className="card">
-        <div className="card-header">
-          <h2>Espresso Records</h2>
-          <button onClick={() => navigate(`/beans/${id}/add-record`)} className="btn btn-primary">
-            Add Record
+      <section className="records-section">
+        <div className="records-section-header">
+          <div>
+            <h2>Shots</h2>
+            {records.length > 0 && (
+              <p className="records-count">
+                {filteredRecords.length}
+                {filtersActive ? ` of ${records.length}` : ''} shot
+                {filteredRecords.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate(`/beans/${id}/add-record`)}
+            className="btn btn-primary"
+          >
+            <IconPlus size={18} />
+            Log shot
           </button>
         </div>
 
         {records.length > 0 && (
-          <SearchBar
-            searchParams={searchParams}
-            onSearchChange={setSearchParams}
-          />
+          <div className="filters-block">
+            <button
+              type="button"
+              className={`filters-toggle${showFilters || filtersActive ? ' active' : ''}`}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              {showFilters ? 'Hide filters' : filtersActive ? 'Filters on' : 'Filter by equipment'}
+            </button>
+            {(showFilters || filtersActive) && (
+              <SearchBar searchParams={searchParams} onSearchChange={setSearchParams} />
+            )}
+          </div>
         )}
 
         {filteredRecords.length === 0 ? (
-          <p>No records yet. Add your first espresso record!</p>
+          <div className="card empty-state">
+            <h3>{records.length === 0 ? 'No records yet' : 'No matching records'}</h3>
+            <p>
+              {records.length === 0
+                ? 'Log your first espresso shot for this bean.'
+                : 'Try adjusting your filters.'}
+            </p>
+          </div>
         ) : (
           <div className="records-grid">
             {filteredRecords.map((record) => (
-              <RecordCard
-                key={record.id}
-                record={record}
-                onDelete={handleRecordDeleted}
-              />
+              <RecordCard key={record.id} record={record} onDelete={handleRecordDeleted} />
             ))}
           </div>
         )}
-      </div>
+      </section>
+
+      <button
+        type="button"
+        className="fab-add-record"
+        onClick={() => navigate(`/beans/${id}/add-record`)}
+        aria-label="Log shot"
+      >
+        <IconPlus size={24} />
+      </button>
     </div>
   );
 };

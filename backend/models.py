@@ -24,6 +24,7 @@ class UserSettings(Base):
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     default_machine = Column(String, nullable=True)
     default_grinder = Column(String, nullable=True)
+    default_dose = Column(Float, nullable=True)  # grams
     
     user = relationship("User", back_populates="settings")
 

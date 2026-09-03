@@ -96,13 +96,14 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 **Quick deployment with scripts:**
 ```bash
-# Deploy to VPS
-./deploy.sh all vps
+# VPS (edit deploy.conf DOMAIN, then)
+DOMAIN=coffee.example.com ./deploy-generic.sh /path/to/espresso-tracker
 
-# Deploy to Railway
+# Redeploy
+./deploy-generic.sh /path/to/espresso-tracker --redeploy --yes
+
+# Other targets
 ./deploy.sh all railway
-
-# Deploy frontend to Netlify
 ./deploy.sh frontend netlify
 ```
 
@@ -135,8 +136,10 @@ espresso-tracker/
 │   ├── package.json         # Node dependencies
 │   └── .env.example         # Environment variables template
 │
-├── deploy.sh                # General deployment script
-├── deploy-vps.sh            # Full VPS setup script
+├── deploy.conf              # VPS deploy settings (DOMAIN, paths, ports)
+├── deploy-generic.sh        # Config-driven VPS deploy (recommended)
+├── deploy.sh                # Component / multi-target helpers
+├── deploy-vps.sh            # Legacy dual-domain VPS setup
 └── DEPLOYMENT.md            # Detailed deployment guide
 ```
 

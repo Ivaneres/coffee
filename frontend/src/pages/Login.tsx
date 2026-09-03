@@ -26,33 +26,39 @@ const Login: React.FC = () => {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h2>Login</h2>
+        <p className="auth-brand">Espresso Tracker</p>
+        <h1 className="auth-title">Welcome back</h1>
+        <p className="auth-subtitle">Sign in to continue dialing in your shots</p>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Username</label>
+            <label htmlFor="login-username">Username</label>
             <input
+              id="login-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              autoComplete="username"
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label htmlFor="login-password">Password</label>
             <input
+              id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary btn-block">
             Login
           </button>
         </form>
         <p className="auth-switch">
-          Don't have an account? <Link to="/register">Register</Link>
+          Don&apos;t have an account? <Link to="/register">Register</Link>
         </p>
       </div>
     </div>

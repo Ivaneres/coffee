@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { recordsApi, EspressoRecord } from '../api/records';
 import { beansApi, Bean } from '../api/beans';
 import RecordCard from '../components/RecordCard';
+import { IconSearch } from '../components/Icons';
 import './Search.css';
 
 const Search: React.FC = () => {
-  const navigate = useNavigate();
   const [records, setRecords] = useState<EspressoRecord[]>([]);
   const [beans, setBeans] = useState<Bean[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,15 +27,14 @@ const Search: React.FC = () => {
   const loadBeans = async () => {
     try {
       const data = await beansApi.getAll();
-      setBeans(data);
+      setBeans(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load beans:', error);
     }
   };
 
   const performSearch = async () => {
-    // Only search if at least one parameter is provided
-    const hasSearchParams = 
+    const hasSearchParams =
       searchParams.bean_variety.trim() ||
       searchParams.bean_roaster.trim() ||
       searchParams.machine.trim() ||
@@ -64,7 +62,7 @@ const Search: React.FC = () => {
       }
 
       const data = await recordsApi.getAll(params);
-      setRecords(data);
+      setRecords(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to search records:', error);
       setRecords([]);
@@ -77,33 +75,37 @@ const Search: React.FC = () => {
     performSearch();
   };
 
-  // Create a map of bean_id to bean for quick lookup
-  const beanMap = new Map(beans.map(bean => [bean.id, bean]));
+  const beanMap = new Map(beans.map((bean) => [bean.id, bean]));
+  const hasCriteria = Object.values(searchParams).some((v) => v.trim());
 
   return (
-    <div>
+    <div className="search-page">
       <div className="page-header">
-        <h1>Search Records</h1>
-        <p className="search-description">
-          Find guidance for your specific bean, machine, and grinder combination
-        </p>
+        <div>
+          <h1 className="page-title">Search Records</h1>
+          <p className="page-subtitle">
+            Find guidance for your bean, machine, and grinder combination
+          </p>
+        </div>
       </div>
 
-      <div className="card">
-        <h2>Search Filters</h2>
+      <div className="card search-filters-card">
+        <h2 className="form-section-title">Filters</h2>
         <div className="search-filters">
           <div className="form-group">
-            <label>Bean Variety</label>
+            <label htmlFor="search-variety">Bean Variety</label>
             <input
+              id="search-variety"
               type="text"
-              placeholder="e.g., Blue Mountain, Ethiopian"
+              placeholder="e.g., Blue Mountain"
               value={searchParams.bean_variety}
               onChange={(e) => setSearchParams({ ...searchParams, bean_variety: e.target.value })}
             />
           </div>
           <div className="form-group">
-            <label>Roaster</label>
+            <label htmlFor="search-roaster">Roaster</label>
             <input
+              id="search-roaster"
               type="text"
               placeholder="e.g., Somewhere in SG"
               value={searchParams.bean_roaster}
@@ -111,8 +113,9 @@ const Search: React.FC = () => {
             />
           </div>
           <div className="form-group">
-            <label>Machine</label>
+            <label htmlFor="search-machine">Machine</label>
             <input
+              id="search-machine"
               type="text"
               placeholder="e.g., La Marzocco Linea Mini"
               value={searchParams.machine}
@@ -120,8 +123,9 @@ const Search: React.FC = () => {
             />
           </div>
           <div className="form-group">
-            <label>Grinder</label>
+            <label htmlFor="search-grinder">Grinder</label>
             <input
+              id="search-grinder"
               type="text"
               placeholder="e.g., Eureka Mignon Specialità"
               value={searchParams.grinder}
@@ -131,23 +135,29 @@ const Search: React.FC = () => {
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <h2>Search Results</h2>
+      <section className="search-results">
+        <div className="search-results-header">
+          <h2>Results</h2>
           {records.length > 0 && (
-            <span className="results-count">{records.length} record{records.length !== 1 ? 's' : ''} found</span>
+            <span className="results-count">
+              {records.length} record{records.length !== 1 ? 's' : ''}
+            </span>
           )}
         </div>
 
         {loading ? (
-          <p>Searching...</p>
+          <div className="loading-state">Searching…</div>
         ) : records.length === 0 ? (
-          <div className="empty-search">
-            {Object.values(searchParams).some(v => v.trim()) ? (
-              <p>No records found matching your search criteria.</p>
-            ) : (
-              <p>Enter search criteria above to find records matching your bean, machine, and grinder combination.</p>
-            )}
+          <div className="card empty-state">
+            <div className="empty-state-icon">
+              <IconSearch size={32} />
+            </div>
+            <h3>{hasCriteria ? 'No matches' : 'Start searching'}</h3>
+            <p>
+              {hasCriteria
+                ? 'No records found matching your criteria.'
+                : 'Enter at least one filter above to find matching shots.'}
+            </p>
           </div>
         ) : (
           <div className="records-grid">
@@ -156,21 +166,18 @@ const Search: React.FC = () => {
               return (
                 <div key={record.id} className="search-record-wrapper">
                   {bean && (
-                    <div className="record-bean-info">
+                    <div className="record-bean-chip">
                       <strong>{bean.variety}</strong>
-                      {bean.roaster && <span className="bean-meta"> • {bean.roaster}</span>}
+                      {bean.roaster && <span> · {bean.roaster}</span>}
                     </div>
                   )}
-                  <RecordCard
-                    record={record}
-                    onDelete={handleRecordDeleted}
-                  />
+                  <RecordCard record={record} onDelete={handleRecordDeleted} />
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };

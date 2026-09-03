@@ -33,7 +33,7 @@ describe('Navbar', () => {
 
     const brandLink = screen.getByRole('link', { name: /espresso tracker/i });
     expect(brandLink).toBeInTheDocument();
-    expect(brandLink).toHaveAttribute('href', '/beans');
+    expect(brandLink).toHaveAttribute('href', '/login');
   });
 
   it('should show navigation links when authenticated', () => {
@@ -45,9 +45,9 @@ describe('Navbar', () => {
 
     render(<Navbar />);
 
-    expect(screen.getByRole('link', { name: /beans/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /search/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /home/i }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole('link', { name: /search/i }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole('link', { name: /settings/i }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('testuser')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument();
   });
@@ -61,13 +61,12 @@ describe('Navbar', () => {
 
     render(<Navbar />);
 
-    expect(screen.queryByRole('link', { name: /beans/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /search/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^home$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^search$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /logout/i })).not.toBeInTheDocument();
   });
 
   it('should handle logout', async () => {
-    
     const mockLogout = jest.fn();
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,

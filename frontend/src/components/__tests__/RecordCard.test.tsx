@@ -3,10 +3,9 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from '../../test-utils';
 import RecordCard from '../RecordCard';
-import * as recordsApi from '../../api/records';
+import { recordsApi } from '../../api/records';
 
 jest.mock('../../api/records');
-const mockedRecordsApi = recordsApi as jest.Mocked<typeof recordsApi>;
 
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
@@ -38,8 +37,6 @@ describe('RecordCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.confirm = jest.fn(() => true);
-    // Ensure mocks are set up
-    (mockedRecordsApi.delete as jest.Mock) = jest.fn();
   });
 
   it('should display record information', () => {
@@ -57,35 +54,33 @@ describe('RecordCard', () => {
   it('should display ratings', () => {
     render(<RecordCard record={mockRecord} onDelete={mockOnDelete} />);
 
-    expect(screen.getByText('Overall')).toBeInTheDocument();
-    expect(screen.getByText('Sourness')).toBeInTheDocument();
-    expect(screen.getByText('Bitterness')).toBeInTheDocument();
-    expect(screen.getByText('Sweetness')).toBeInTheDocument();
-    // Check for rating values using getAllByText since there are multiple 8s
+    expect(screen.getByLabelText(/overall rating 8/i)).toBeInTheDocument();
+    expect(screen.getByText('Sour')).toBeInTheDocument();
+    expect(screen.getByText('Bitter')).toBeInTheDocument();
+    expect(screen.getByText('Sweet')).toBeInTheDocument();
     const ratingValues = screen.getAllByText('8');
     expect(ratingValues.length).toBeGreaterThan(0);
   });
 
   it('should navigate to edit page when edit button is clicked', async () => {
-    
     render(<RecordCard record={mockRecord} onDelete={mockOnDelete} />);
 
-    const editButton = screen.getByRole('button', { name: /✏️/i });
+    const editButton = screen.getByRole('button', { name: /edit record/i });
     await userEvent.click(editButton);
 
     expect(mockNavigate).toHaveBeenCalledWith('/beans/1/edit-record/1');
   });
 
   it('should delete record when delete button is clicked and confirmed', async () => {
-    (mockedRecordsApi.delete as jest.Mock).mockResolvedValue(undefined);
+    jest.mocked(recordsApi.delete).mockResolvedValue(undefined);
 
     render(<RecordCard record={mockRecord} onDelete={mockOnDelete} />);
 
-    const deleteButton = screen.getByRole('button', { name: /🗑️/i });
+    const deleteButton = screen.getByRole('button', { name: /delete record/i });
     await userEvent.click(deleteButton);
 
     await waitFor(() => {
-      expect(mockedRecordsApi.delete as jest.Mock).toHaveBeenCalledWith(1);
+      expect(recordsApi.delete).toHaveBeenCalledWith(1);
     });
 
     await waitFor(() => {
@@ -94,15 +89,14 @@ describe('RecordCard', () => {
   });
 
   it('should not delete record when delete is cancelled', async () => {
-    
     window.confirm = jest.fn(() => false);
 
     render(<RecordCard record={mockRecord} onDelete={mockOnDelete} />);
 
-    const deleteButton = screen.getByRole('button', { name: /🗑️/i });
+    const deleteButton = screen.getByRole('button', { name: /delete record/i });
     await userEvent.click(deleteButton);
 
-    expect(mockedRecordsApi.delete as jest.Mock).not.toHaveBeenCalled();
+    expect(recordsApi.delete).not.toHaveBeenCalled();
     expect(mockOnDelete).not.toHaveBeenCalled();
   });
 
@@ -125,7 +119,6 @@ describe('RecordCard', () => {
   it('should format date correctly', () => {
     render(<RecordCard record={mockRecord} onDelete={mockOnDelete} />);
 
-    // The date should be formatted and displayed
     const dateElement = screen.getByText(/jan/i);
     expect(dateElement).toBeInTheDocument();
   });

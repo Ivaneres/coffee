@@ -5,11 +5,13 @@ export interface UserSettings {
   user_id: number;
   default_machine?: string;
   default_grinder?: string;
+  default_dose?: number;
 }
 
 export interface UserSettingsUpdate {
   default_machine?: string;
   default_grinder?: string;
+  default_dose?: number | null;
 }
 
 export const settingsApi = {

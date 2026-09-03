@@ -3,10 +3,9 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from '../../test-utils';
 import BeansList from '../BeansList';
-import * as beansApi from '../../api/beans';
+import { beansApi } from '../../api/beans';
 
 jest.mock('../../api/beans');
-const mockedBeansApi = beansApi as jest.Mocked<typeof beansApi>;
 
 const mockUseAuth = jest.fn();
 jest.mock('../../contexts/AuthContext', () => ({
@@ -17,9 +16,6 @@ jest.mock('../../contexts/AuthContext', () => ({
 describe('BeansList', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Ensure mocks are set up
-    (mockedBeansApi.getAll as jest.Mock) = jest.fn();
-    (mockedBeansApi.create as jest.Mock) = jest.fn();
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       user: { id: 1, username: 'testuser', email: 'test@example.com', created_at: '2024-01-01' },
@@ -31,21 +27,23 @@ describe('BeansList', () => {
   });
 
   it('should display loading state initially', () => {
-    (mockedBeansApi.getAll as jest.Mock).mockImplementation(() => new Promise(() => {})); // Never resolves
+    jest.mocked(beansApi.getAll).mockImplementation(() => new Promise(() => {}));
 
     render(<BeansList />);
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
   it('should display empty state when no beans', async () => {
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue([]);
+    jest.mocked(beansApi.getAll).mockResolvedValue([]);
 
     render(<BeansList />);
 
     await waitFor(() => {
       expect(screen.getByText(/no beans yet/i)).toBeInTheDocument();
       expect(screen.getByText(/add your first bean/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /ready to dial in/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /log a shot/i })).toBeInTheDocument();
     });
   });
 
@@ -70,7 +68,7 @@ describe('BeansList', () => {
       },
     ];
 
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue(mockBeans);
+    jest.mocked(beansApi.getAll).mockResolvedValue(mockBeans);
 
     render(<BeansList />);
 
@@ -82,7 +80,7 @@ describe('BeansList', () => {
   });
 
   it('should show add bean form when button is clicked', async () => {
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue([]);
+    jest.mocked(beansApi.getAll).mockResolvedValue([]);
 
     render(<BeansList />);
 
@@ -95,21 +93,19 @@ describe('BeansList', () => {
 
     expect(screen.getByText('Add New Bean')).toBeInTheDocument();
     expect(screen.getByText('Variety *')).toBeInTheDocument();
-    // Check for input by placeholder or role
     const inputs = screen.getAllByRole('textbox');
     expect(inputs.length).toBeGreaterThan(0);
   });
 
   it('should create new bean', async () => {
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue([]);
     const newBean = {
       id: 1,
       user_id: 1,
       variety: 'New Bean',
       created_at: '2024-01-01',
     };
-    (mockedBeansApi.create as jest.Mock).mockResolvedValue(newBean);
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValueOnce([]).mockResolvedValueOnce([newBean]);
+    jest.mocked(beansApi.getAll).mockResolvedValueOnce([]).mockResolvedValueOnce([newBean]);
+    jest.mocked(beansApi.create).mockResolvedValue(newBean);
 
     render(<BeansList />);
 
@@ -125,10 +121,10 @@ describe('BeansList', () => {
     await userEvent.click(screen.getByRole('button', { name: /create bean/i }));
 
     await waitFor(() => {
-      expect(mockedBeansApi.create as jest.Mock).toHaveBeenCalled();
+      expect(beansApi.create).toHaveBeenCalled();
     }, { timeout: 3000 });
-    
-    expect(mockedBeansApi.create as jest.Mock).toHaveBeenCalledWith({
+
+    expect(beansApi.create).toHaveBeenCalledWith({
       variety: 'New Bean',
       seller: '',
       roaster: '',
@@ -137,7 +133,7 @@ describe('BeansList', () => {
   });
 
   it('should cancel form when cancel button is clicked', async () => {
-    (mockedBeansApi.getAll as jest.Mock).mockResolvedValue([]);
+    jest.mocked(beansApi.getAll).mockResolvedValue([]);
 
     render(<BeansList />);
 

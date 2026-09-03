@@ -1,81 +1,177 @@
-.navbar {
-  background-color: #8B4513;
-  color: white;
-  padding: 18px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.topbar {
   position: sticky;
   top: 0;
   z-index: 1000;
-  width: 100%;
+  background: rgba(28, 34, 44, 0.96);
+  color: var(--chrome-ink);
+  backdrop-filter: blur(10px);
+  padding-top: var(--safe-top);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.navbar-container {
-  max-width: 1400px;
+.topbar-inner {
+  max-width: var(--content-max);
   margin: 0 auto;
-  padding: 0 40px;
+  min-height: var(--topbar-h);
+  padding: 0 var(--space-4);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-4);
 }
 
-@media (max-width: 768px) {
-  .navbar-container {
-    padding: 0 20px;
+@media (min-width: 769px) {
+  .topbar-inner {
+    padding: 0 var(--space-6);
   }
 }
 
 .navbar-brand {
-  font-size: 24px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
   font-weight: 600;
-  color: white;
+  color: var(--chrome-ink);
   text-decoration: none;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.navbar-menu {
-  display: flex;
+.navbar-brand:hover {
+  color: #fff;
+}
+
+.desktop-nav {
+  display: none;
   align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
-@media (max-width: 768px) {
-  .navbar-menu {
-    gap: 12px;
-    font-size: 14px;
-  }
-  
-  .navbar-brand {
-    font-size: 20px;
+@media (min-width: 769px) {
+  .desktop-nav {
+    display: flex;
   }
 }
 
 .navbar-link {
-  color: white;
+  color: rgba(232, 234, 237, 0.68);
   text-decoration: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
 }
 
 .navbar-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--chrome-ink);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-link.active {
+  color: #fff;
+  background-color: rgba(15, 118, 110, 0.35);
 }
 
 .navbar-user {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 14px;
+  color: rgba(232, 234, 237, 0.6);
+  font-size: 0.875rem;
+  margin-left: var(--space-2);
 }
 
 .navbar-logout {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 5px 15px;
-  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--chrome-ink);
+  border: 1px solid rgba(232, 234, 237, 0.18);
+  padding: 8px 16px;
+  min-height: var(--touch-min);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background-color var(--transition-fast);
 }
 
 .navbar-logout:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+.tabbar {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+  padding: 0 var(--space-2) var(--safe-bottom);
+  background: rgba(28, 34, 44, 0.97);
+  border-top: 1px solid rgba(232, 234, 237, 0.08);
+  box-shadow: 0 -8px 24px rgba(20, 24, 31, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+@media (min-width: 769px) {
+  .tabbar {
+    display: none;
+  }
+}
+
+.tab-link {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: rgba(232, 234, 237, 0.48);
+  text-decoration: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  min-height: var(--tabbar-h);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  position: relative;
+}
+
+.tab-link svg {
+  transition: transform var(--transition-med);
+}
+
+.tab-link:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tab-link.active {
+  color: #5eead4;
+}
+
+.tab-link.active::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  width: 28px;
+  height: 3px;
+  border-radius: 999px;
+  background: #5eead4;
+  animation: tabIndicator 220ms ease;
+}
+
+.tab-link.active svg {
+  transform: translateY(-1px);
+}
+
+@keyframes tabIndicator {
+  from {
+    transform: scaleX(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
 }

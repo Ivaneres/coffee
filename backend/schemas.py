@@ -33,12 +33,14 @@ class TokenData(BaseModel):
 class UserSettingsCreate(BaseModel):
     default_machine: Optional[str] = None
     default_grinder: Optional[str] = None
+    default_dose: Optional[float] = None
 
 class UserSettingsResponse(BaseModel):
     id: int
     user_id: int
     default_machine: Optional[str] = None
     default_grinder: Optional[str] = None
+    default_dose: Optional[float] = None
     
     class Config:
         from_attributes = True

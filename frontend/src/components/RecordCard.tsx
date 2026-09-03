@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { recordsApi, EspressoRecord } from '../api/records';
+import { IconEdit, IconTrash } from './Icons';
 import './RecordCard.css';
 
 interface RecordCardProps {
@@ -38,56 +39,65 @@ const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete }) => {
     });
   };
 
+  const metaItems: { label: string; value: string }[] = [
+    { label: 'Machine', value: record.machine },
+    { label: 'Grinder', value: record.grinder },
+  ];
+  if (record.grind_size) metaItems.push({ label: 'Grind', value: record.grind_size });
+  if (record.dose) metaItems.push({ label: 'Dose', value: `${record.dose}g` });
+  if (record.extraction_time) metaItems.push({ label: 'Time', value: `${record.extraction_time}s` });
+  if (record.yield_amount) metaItems.push({ label: 'Yield', value: `${record.yield_amount}g` });
+
   return (
-    <div className="record-card">
-      <div className="card-header">
-        <h3>{formatDate(record.created_at)}</h3>
+    <article className="record-card">
+      <div className="record-card-header">
+        <div className="record-card-title-block">
+          <h3>{formatDate(record.created_at)}</h3>
+          {typeof record.rating === 'number' && (
+            <span className="record-rating-pill" aria-label={`Overall rating ${record.rating}`}>
+              {record.rating}
+              <span>/10</span>
+            </span>
+          )}
+        </div>
         <div className="card-actions">
-          <button onClick={handleEdit} className="btn-icon">
-            ✏️
+          <button type="button" onClick={handleEdit} className="btn-icon" aria-label="Edit record">
+            <IconEdit size={20} />
           </button>
-          <button onClick={handleDelete} className="btn-icon">
-            🗑️
+          <button type="button" onClick={handleDelete} className="btn-icon danger" aria-label="Delete record">
+            <IconTrash size={20} />
           </button>
         </div>
       </div>
 
-      <div className="record-info">
-        <p><strong>Machine:</strong> {record.machine}</p>
-        <p><strong>Grinder:</strong> {record.grinder}</p>
-        {record.grind_size && <p><strong>Grind Size:</strong> {record.grind_size}</p>}
-        {record.dose && <p><strong>Dose:</strong> {record.dose}g</p>}
-        {record.extraction_time && (
-          <p><strong>Extraction Time:</strong> {record.extraction_time}s</p>
-        )}
-        {record.yield_amount && (
-          <p><strong>Yield:</strong> {record.yield_amount}g</p>
-        )}
+      <div className="record-meta-grid">
+        {metaItems.map((item) => (
+          <div key={item.label} className="record-meta-item">
+            <span className="record-meta-label">{item.label}</span>
+            <span className="record-meta-value">{item.value}</span>
+          </div>
+        ))}
       </div>
 
-      {(typeof record.rating === 'number' || typeof record.sourness === 'number' || typeof record.bitterness === 'number' || typeof record.sweetness === 'number') && (
+      {(typeof record.sourness === 'number' ||
+        typeof record.bitterness === 'number' ||
+        typeof record.sweetness === 'number') && (
         <div className="rating-display">
-          {typeof record.rating === 'number' && (
-            <div className="rating-item">
-              <span className="rating-label">Overall</span>
-              <span className="rating-value">{record.rating}</span>
-            </div>
-          )}
           {typeof record.sourness === 'number' && (
             <div className="rating-item">
-              <span className="rating-label">Sourness</span>
+              <span className="rating-label">Sour</span>
               <span className="rating-value">{record.sourness}</span>
             </div>
           )}
           {typeof record.bitterness === 'number' && (
             <div className="rating-item">
-              <span className="rating-label">Bitterness</span>
+              <span className="rating-label">Bitter</span>
               <span className="rating-value">{record.bitterness}</span>
             </div>
           )}
           {typeof record.sweetness === 'number' && (
             <div className="rating-item">
-              <span className="rating-label">Sweetness</span>
+              <span className="rating-label">Sweet</span>
               <span className="rating-value">{record.sweetness}</span>
             </div>
           )}
@@ -96,11 +106,11 @@ const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete }) => {
 
       {record.notes && (
         <div className="record-notes">
-          <p><strong>Notes:</strong></p>
+          <p className="record-notes-label">Notes</p>
           <p>{record.notes}</p>
         </div>
       )}
-    </div>
+    </article>
   );
 };
 

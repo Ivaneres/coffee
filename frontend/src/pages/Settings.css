@@ -1,5 +1,69 @@
 .settings-description {
-  color: #666;
-  margin-bottom: 20px;
-  font-size: 14px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: calc(-1 * var(--space-2)) 0 var(--space-5);
+  line-height: 1.5;
+}
+
+.account-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.account-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  flex-shrink: 0;
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.account-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.account-email {
+  font-size: 0.875rem;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+@media (min-width: 640px) {
+  .settings-page .btn-block {
+    width: auto;
+    min-width: 160px;
+  }
+
+  .account-card .btn-block {
+    align-self: flex-start;
+  }
 }

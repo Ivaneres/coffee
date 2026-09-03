@@ -3,24 +3,26 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from '../../test-utils';
 import Settings from '../Settings';
-import * as settingsApi from '../../api/settings';
+import { settingsApi } from '../../api/settings';
 
 jest.mock('../../api/settings');
-const mockedSettingsApi = settingsApi as jest.Mocked<typeof settingsApi>;
 
 const mockUseAuth = jest.fn();
+const mockNavigate = jest.fn();
 
 jest.mock('../../contexts/AuthContext', () => ({
   ...jest.requireActual('../../contexts/AuthContext'),
   useAuth: () => mockUseAuth(),
 }));
 
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}));
+
 describe('Settings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Ensure mocks are set up
-    (mockedSettingsApi.get as jest.Mock) = jest.fn();
-    (mockedSettingsApi.update as jest.Mock) = jest.fn();
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       user: { id: 1, username: 'testuser', email: 'test@example.com', created_at: '2024-01-01' },
@@ -32,11 +34,11 @@ describe('Settings', () => {
   });
 
   it('should display loading state initially', () => {
-    (mockedSettingsApi.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
+    jest.mocked(settingsApi.get).mockImplementation(() => new Promise(() => {}));
 
     render(<Settings />);
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
   it('should load and display current settings', async () => {
@@ -47,16 +49,14 @@ describe('Settings', () => {
       default_grinder: 'Eureka',
     };
 
-    (mockedSettingsApi.get as jest.Mock).mockResolvedValue(mockSettings);
+    jest.mocked(settingsApi.get).mockResolvedValue(mockSettings);
 
     render(<Settings />);
 
-    // Wait for loading to complete
     await waitFor(() => {
-      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     }, { timeout: 3000 });
 
-    // Wait for form inputs to be populated with settings values
     await waitFor(() => {
       const machineInput = screen.getByLabelText('Default Machine') as HTMLInputElement;
       const grinderInput = screen.getByLabelText('Default Grinder') as HTMLInputElement;
@@ -79,14 +79,13 @@ describe('Settings', () => {
       default_grinder: 'Baratza',
     };
 
-    (mockedSettingsApi.get as jest.Mock).mockResolvedValue(mockSettings);
-    (mockedSettingsApi.update as jest.Mock).mockResolvedValue(updatedSettings);
+    jest.mocked(settingsApi.get).mockResolvedValue(mockSettings);
+    jest.mocked(settingsApi.update).mockResolvedValue(updatedSettings);
 
     render(<Settings />);
 
-    // Wait for loading to complete
     await waitFor(() => {
-      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     });
 
     await waitFor(() => {
@@ -106,11 +105,12 @@ describe('Settings', () => {
     await userEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(mockedSettingsApi.update as jest.Mock).toHaveBeenCalledWith({
+      expect(settingsApi.update).toHaveBeenCalledWith({
         default_machine: 'Rancilio',
         default_grinder: 'Baratza',
+        default_dose: null,
       });
-      expect(window.alert).toHaveBeenCalledWith('Settings saved successfully!');
+      expect(screen.getByText(/settings saved successfully/i)).toBeInTheDocument();
     });
   });
 
@@ -122,14 +122,15 @@ describe('Settings', () => {
       default_grinder: 'Eureka',
     };
 
-    (mockedSettingsApi.get as jest.Mock).mockResolvedValue(mockSettings);
-    (mockedSettingsApi.update as jest.Mock).mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    jest.mocked(settingsApi.get).mockResolvedValue(mockSettings);
+    jest.mocked(settingsApi.update).mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve(mockSettings), 100))
+    );
 
     render(<Settings />);
 
-    // Wait for loading to complete
     await waitFor(() => {
-      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     });
 
     await waitFor(() => {
@@ -140,7 +141,7 @@ describe('Settings', () => {
     const saveButton = screen.getByRole('button', { name: /save settings/i });
     await userEvent.click(saveButton);
 
-    expect(screen.getByText('Saving...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /saving/i })).toBeInTheDocument();
     expect(saveButton).toBeDisabled();
   });
 
@@ -152,14 +153,13 @@ describe('Settings', () => {
       default_grinder: 'Eureka',
     };
 
-    (mockedSettingsApi.get as jest.Mock).mockResolvedValue(mockSettings);
-    (mockedSettingsApi.update as jest.Mock).mockRejectedValue(new Error('Save failed'));
+    jest.mocked(settingsApi.get).mockResolvedValue(mockSettings);
+    jest.mocked(settingsApi.update).mockRejectedValue(new Error('Save failed'));
 
     render(<Settings />);
 
-    // Wait for loading to complete
     await waitFor(() => {
-      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     }, { timeout: 3000 });
 
     await waitFor(() => {
@@ -171,7 +171,7 @@ describe('Settings', () => {
     await userEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith('Failed to save settings');
+      expect(screen.getByText(/failed to save settings/i)).toBeInTheDocument();
     });
   });
 });
