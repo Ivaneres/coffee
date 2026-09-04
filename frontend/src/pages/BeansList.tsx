@@ -32,7 +32,30 @@ const BeansList: React.FC = () => {
       if (e.key === 'Escape') setShowPicker(false);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+
+    // Keep the sheet inside the visible viewport while the mobile keyboard is open.
+    const root = document.documentElement;
+    const vv = window.visualViewport;
+    const syncViewport = () => {
+      if (!vv) {
+        root.style.setProperty('--picker-vv-height', '100dvh');
+        root.style.setProperty('--picker-vv-offset-top', '0px');
+        return;
+      }
+      root.style.setProperty('--picker-vv-height', `${vv.height}px`);
+      root.style.setProperty('--picker-vv-offset-top', `${vv.offsetTop}px`);
+    };
+    syncViewport();
+    vv?.addEventListener('resize', syncViewport);
+    vv?.addEventListener('scroll', syncViewport);
+
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      vv?.removeEventListener('resize', syncViewport);
+      vv?.removeEventListener('scroll', syncViewport);
+      root.style.removeProperty('--picker-vv-height');
+      root.style.removeProperty('--picker-vv-offset-top');
+    };
   }, [showPicker]);
 
   const lastBeanId = useMemo(() => {
@@ -284,6 +307,7 @@ const BeansList: React.FC = () => {
                 onChange={(e) => setPickerQuery(e.target.value)}
                 placeholder="Search beans…"
                 autoComplete="off"
+                enterKeyHint="search"
                 autoFocus
               />
             </div>
